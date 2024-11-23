@@ -1,0 +1,139 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'pmd'
+    id 'com.github.spotbugs' version '6.0.25'
+    id 'com.adarshr.test-logger' version '4.0.0'
+    id 'com.github.ben-manes.versions' version '0.51.0'
+    id 'de.undercouch.download' version '5.6.0'
+}
+
+static def path(String... args) {
+    return String.join(File.separator, args)
+}
+
+// Tunables
+ext.basePackage = 'com.ledmington'
+def version = '0.0.0'
+String appName = 'jformat'
+String appDescription = 'A configurable zero-dependency java formatter.'
+ext.appNameLowerCase = appName.toLowerCase(Locale.US)
+String author = 'Filippo Barbari'
+String authorMail = 'filippo.barbari@gmail.com'
+
+ext.junitVersion = '5.11.3'
+// End tunables
+
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'jacoco'
+    apply plugin: 'pmd'
+    apply plugin: 'com.github.spotbugs'
+    apply plugin: 'com.adarshr.test-logger'
+    apply plugin: 'com.github.ben-manes.versions'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}"
+
+        testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+        testImplementation "org.junit.jupiter:junit-jupiter-params:${junitVersion}"
+        testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs << '-Xdiags:verbose'
+        options.compilerArgs << '-Xlint:all'
+        options.compilerArgs << '-Werror'
+        options.deprecation = true
+        options.encoding = 'UTF-8'
+    }
+
+    javadoc {
+        failOnError = true
+        title "jformat-v${version}-doc"
+        options.encoding = 'UTF-8'
+        options.addBooleanOption('Werror', true)
+    }
+
+    test {
+        useJUnitPlatform()
+        finalizedBy jacocoTestReport
+    }
+
+    jacocoTestReport {
+        dependsOn test // tests are required to run before generating the report
+        reports {
+            html.required = true
+            html.outputLocation = layout.buildDirectory.dir('jacoco')
+        }
+    }
+
+    jacoco {
+        toolVersion = "0.8.12"
+        reportsDirectory = layout.buildDirectory.dir('jacoco')
+    }
+
+    testlogger {
+        theme 'standard'
+
+        showExceptions true
+        showStackTraces true
+        showFullStackTraces true
+        showCauses true
+
+        slowThreshold 2000
+
+        showSummary true
+        showSimpleNames false
+        showPassed false // enable for verbose tests
+        showSkipped true
+        showFailed true
+        showOnlySlow false
+
+        showStandardStreams true
+        showPassedStandardStreams false
+        showSkippedStandardStreams true
+        showFailedStandardStreams true
+
+        logLevel 'lifecycle'
+    }
+
+    pmd {
+        consoleOutput = true
+        toolVersion = "7.2.0"
+        rulesMinimumPriority = 5
+        threads = 1
+        incrementalAnalysis = true
+        ruleSetConfig = resources.text.fromFile(path("${project.rootDir}", "ruleset.xml"))
+    }
+
+    spotbugs {
+        toolVersion = '4.8.6'
+
+        ignoreFailures = false
+        showStackTraces = true
+        showProgress = false // too verbose for parallel output
+    }
+
+    // cleanup tasks
+    clean.dependsOn('cleanBin')
+
+    // remove default VSCode build directory
+    tasks.register('cleanBin', Delete) {
+        delete "${project.projectDir}/bin"
+    }
+}
+
+allprojects.each {
+    it.tasks.build.dependsOn(it.tasks.javadoc)
+}
