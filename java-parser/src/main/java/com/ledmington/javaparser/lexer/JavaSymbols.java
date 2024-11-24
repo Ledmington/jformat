@@ -43,6 +43,5 @@ public enum JavaSymbols implements JavaToken {
 	PIPE_EQUAL,
 	AMPERSAND_EQUAL,
 	HAT_EQUAL,
-	AT_SIGN,
-	SINGLE_QUOTE
+	AT_SIGN
 }

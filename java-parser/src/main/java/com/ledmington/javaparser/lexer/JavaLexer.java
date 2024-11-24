@@ -167,13 +167,25 @@ public final class JavaLexer {
 			return Optional.of(JavaSymbols.AT_SIGN);
 		} else if (v[i] == '\'') {
 			i++;
-			return Optional.of(JavaSymbols.SINGLE_QUOTE);
+			final StringBuilder sb = new StringBuilder();
+			while(i < v.length && v[i] != '\'') {
+				sb.append(v[i]);
+				i++;
+			}
+			if(i >= v.length && v[v.length-1] != '\'') {
+				throw new InvalidLiteralException('\'' + sb.toString());
+			}
+			i++;
+			return Optional.of(new CharLiteral(sb.toString()));
 		} else if (v[i] == '\"') {
 			i++;
 			final StringBuilder sb = new StringBuilder();
 			while(i < v.length && v[i] != '\"') {
 				sb.append(v[i]);
 				i++;
+			}
+			if(i >= v.length && v[v.length-1] != '\"') {
+				throw new InvalidLiteralException('\"' + sb.toString());
 			}
 			i++;
 			return Optional.of(new StringLiteral(sb.toString()));

@@ -102,7 +102,6 @@ final class TestJavaLexer {
 				Arguments.of("?", List.of(JavaSymbols.QUESTION_MARK)),
 				Arguments.of("=", List.of(JavaSymbols.EQUAL)),
 				Arguments.of("@", List.of(JavaSymbols.AT_SIGN)),
-				Arguments.of("'", List.of(JavaSymbols.SINGLE_QUOTE)),
 				Arguments.of("==", List.of(JavaSymbols.DOUBLE_EQUAL)),
 				Arguments.of("!=", List.of(JavaSymbols.NOT_EQUAL)),
 				Arguments.of("<=", List.of(JavaSymbols.LESS_OR_EQUAL)),
@@ -144,8 +143,14 @@ final class TestJavaLexer {
 				Arguments.of("0b0L", List.of(new IntegerLiteral(BigInteger.valueOf(0), true))),
 				Arguments.of("0b11010101", List.of(new IntegerLiteral(BigInteger.valueOf(213)))),
 				Arguments.of("0b11010101L", List.of(new IntegerLiteral(BigInteger.valueOf(213), true))),
+				// char literals
+				Arguments.of("'a'", List.of(new CharLiteral("a"))),
+				Arguments.of("'\\n'", List.of(new CharLiteral("\\n"))),
+				Arguments.of("'\\u1234'", List.of(new CharLiteral("\\u1234"))),
 				// string literals
+				Arguments.of("\"\"", List.of(new StringLiteral(""))),
 				Arguments.of("\"abc\"", List.of(new StringLiteral("abc"))),
+				Arguments.of("\"\n\"", List.of(new StringLiteral("\n"))),
 				// IDs
 				Arguments.of("x", List.of(new JavaID("x"))),
 				Arguments.of("x1", List.of(new JavaID("x1"))),
@@ -176,7 +181,7 @@ final class TestJavaLexer {
 	}
 
 	private static Stream<Arguments> wrongJavaSourceCode() {
-		return Stream.of("$", "£", "#", "€").map(Arguments::of);
+		return Stream.of("$", "£", "#", "€","\"a","\"","'a","'").map(Arguments::of);
 	}
 
 	@ParameterizedTest
@@ -190,7 +195,7 @@ final class TestJavaLexer {
 			}
 			// if we reach the end without exceptions we fail
 			Assertions.fail();
-		} catch (final UnknownTokenException e) {
+		} catch (final UnknownTokenException | InvalidLiteralException e) {
 			// ignored because it is what we expect
 		}
 	}
