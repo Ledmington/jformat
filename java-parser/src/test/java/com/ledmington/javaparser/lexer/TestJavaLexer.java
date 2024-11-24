@@ -103,7 +103,6 @@ final class TestJavaLexer {
 				Arguments.of("=", List.of(JavaSymbols.EQUAL)),
 				Arguments.of("@", List.of(JavaSymbols.AT_SIGN)),
 				Arguments.of("'", List.of(JavaSymbols.SINGLE_QUOTE)),
-				Arguments.of("\"", List.of(JavaSymbols.DOUBLE_QUOTE)),
 				Arguments.of("==", List.of(JavaSymbols.DOUBLE_EQUAL)),
 				Arguments.of("!=", List.of(JavaSymbols.NOT_EQUAL)),
 				Arguments.of("<=", List.of(JavaSymbols.LESS_OR_EQUAL)),
@@ -145,6 +144,8 @@ final class TestJavaLexer {
 				Arguments.of("0b0L", List.of(new IntegerLiteral(BigInteger.valueOf(0), true))),
 				Arguments.of("0b11010101", List.of(new IntegerLiteral(BigInteger.valueOf(213)))),
 				Arguments.of("0b11010101L", List.of(new IntegerLiteral(BigInteger.valueOf(213), true))),
+				// string literals
+				Arguments.of("\"abc\"", List.of(new StringLiteral("abc"))),
 				// IDs
 				Arguments.of("x", List.of(new JavaID("x"))),
 				Arguments.of("x1", List.of(new JavaID("x1"))),

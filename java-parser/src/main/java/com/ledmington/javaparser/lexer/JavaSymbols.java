@@ -44,6 +44,5 @@ public enum JavaSymbols implements JavaToken {
 	AMPERSAND_EQUAL,
 	HAT_EQUAL,
 	AT_SIGN,
-	SINGLE_QUOTE,
-	DOUBLE_QUOTE
+	SINGLE_QUOTE
 }

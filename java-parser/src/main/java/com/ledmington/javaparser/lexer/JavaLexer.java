@@ -170,7 +170,13 @@ public final class JavaLexer {
 			return Optional.of(JavaSymbols.SINGLE_QUOTE);
 		} else if (v[i] == '\"') {
 			i++;
-			return Optional.of(JavaSymbols.DOUBLE_QUOTE);
+			final StringBuilder sb = new StringBuilder();
+			while(i < v.length && v[i] != '\"') {
+				sb.append(v[i]);
+				i++;
+			}
+			i++;
+			return Optional.of(new StringLiteral(sb.toString()));
 		} else if (v[i] == '=') {
 			i++;
 			if (i < v.length && v[i] == '=') {
