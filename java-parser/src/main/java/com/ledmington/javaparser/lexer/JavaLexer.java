@@ -170,7 +170,29 @@ public final class JavaLexer {
 			case '!' -> JavaSymbols.EXCLAMATION_MARK;
 			case '?' -> JavaSymbols.QUESTION_MARK;
 			case '@' -> JavaSymbols.AT_SIGN;
+			case '\'' -> {
+				it.move();
+				final StringBuilder sb = new StringBuilder();
+				while(it.hasNext() && it.current() != '\'') {
+					sb.append(it.current());
+					it.move();
+				}
+				yield new CharLiteral(sb.toString());
+			}
+			case '"' -> {
+				it.move();
+				final StringBuilder sb = new StringBuilder();
+				while(it.hasNext() && it.current() != '"') {
+					sb.append(it.current());
+					it.move();
+				}
+				yield new StringLiteral(sb.toString());
+			}
 			default -> {
+				if(Character.isDigit(it.current())) {
+					yield parseIntegerLiteral(it);
+				}
+
 				final StringBuilder sb = new StringBuilder();
 				while(it.hasNext() && !Character.isWhitespace(it.current())) {
 					sb.append(it.current());
