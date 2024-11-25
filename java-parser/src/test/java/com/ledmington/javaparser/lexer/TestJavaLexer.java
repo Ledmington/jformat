@@ -2,7 +2,6 @@ package com.ledmington.javaparser.lexer;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Assertions;
@@ -10,11 +9,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 final class TestJavaLexer {
 
 	private static Stream<Arguments> correctJavaSourceCode() {
 		return Stream.of(
-				Arguments.of(" ", List.of()),
+				Arguments.of("", List.of()),
 				Arguments.of("/*ignored*/", List.of()),
 				Arguments.of("//ignored\n", List.of()),
 				// keywords
@@ -88,37 +89,42 @@ final class TestJavaLexer {
 				Arguments.of("(", List.of(JavaSymbols.LEFT_BRACKET)),
 				Arguments.of(")", List.of(JavaSymbols.RIGHT_BRACKET)),
 				Arguments.of("<", List.of(JavaSymbols.LEFT_ANGLE_BRACKET)),
+				Arguments.of("<=", List.of(JavaSymbols.LESS_OR_EQUAL)),
+				Arguments.of("<<", List.of(JavaSymbols.LEFT_SHIFT)),
+				Arguments.of("<<=", List.of(JavaSymbols.LEFT_SHIFT_EQUAL)),
 				Arguments.of(">", List.of(JavaSymbols.RIGHT_ANGLE_BRACKET)),
+				Arguments.of(">=", List.of(JavaSymbols.GREATER_OR_EQUAL)),
+				Arguments.of(">>", List.of(JavaSymbols.RIGHT_SHIFT)),
+				Arguments.of(">>=", List.of(JavaSymbols.RIGHT_SHIFT_EQUAL)),
+				Arguments.of(">>>", List.of(JavaSymbols.UNSIGNED_RIGHT_SHIFT)),
+				Arguments.of(">>>=", List.of(JavaSymbols.UNSIGNED_RIGHT_SHIFT_EQUAL)),
 				Arguments.of("+", List.of(JavaSymbols.PLUS)),
+				Arguments.of("++", List.of(JavaSymbols.PLUS_PLUS)),
+				Arguments.of("+=", List.of(JavaSymbols.PLUS_EQUAL)),
 				Arguments.of("-", List.of(JavaSymbols.MINUS)),
+				Arguments.of("--", List.of(JavaSymbols.MINUS_MINUS)),
+				Arguments.of("-=", List.of(JavaSymbols.MINUS_EQUAL)),
 				Arguments.of("*", List.of(JavaSymbols.ASTERISK)),
+				Arguments.of("*=", List.of(JavaSymbols.ASTERISK_EQUAL)),
 				Arguments.of("/", List.of(JavaSymbols.FORWARD_SLASH)),
+				Arguments.of("/=", List.of(JavaSymbols.FORWARD_SLASH_EQUAL)),
 				Arguments.of("%", List.of(JavaSymbols.PERCENT)),
+				Arguments.of("%=", List.of(JavaSymbols.PERCENT_EQUAL)),
 				Arguments.of("^", List.of(JavaSymbols.HAT)),
+				Arguments.of("^=", List.of(JavaSymbols.HAT_EQUAL)),
 				Arguments.of("|", List.of(JavaSymbols.PIPE)),
+				Arguments.of("|=", List.of(JavaSymbols.PIPE_EQUAL)),
+				Arguments.of("||", List.of(JavaSymbols.DOUBLE_PIPE)),
 				Arguments.of("&", List.of(JavaSymbols.AMPERSAND)),
+				Arguments.of("&=", List.of(JavaSymbols.AMPERSAND_EQUAL)),
+				Arguments.of("&&", List.of(JavaSymbols.DOUBLE_AMPERSAND)),
 				Arguments.of("~", List.of(JavaSymbols.TILDE)),
 				Arguments.of("!", List.of(JavaSymbols.EXCLAMATION_MARK)),
 				Arguments.of("?", List.of(JavaSymbols.QUESTION_MARK)),
 				Arguments.of("=", List.of(JavaSymbols.EQUAL)),
-				Arguments.of("@", List.of(JavaSymbols.AT_SIGN)),
 				Arguments.of("==", List.of(JavaSymbols.DOUBLE_EQUAL)),
-				Arguments.of("!=", List.of(JavaSymbols.NOT_EQUAL)),
-				Arguments.of("<=", List.of(JavaSymbols.LESS_OR_EQUAL)),
-				Arguments.of(">=", List.of(JavaSymbols.GREATER_OR_EQUAL)),
-				Arguments.of("&&", List.of(JavaSymbols.DOUBLE_AMPERSAND)),
-				Arguments.of("||", List.of(JavaSymbols.DOUBLE_PIPE)),
+				Arguments.of("@", List.of(JavaSymbols.AT_SIGN)),
 				Arguments.of("->", List.of(JavaSymbols.ARROW)),
-				Arguments.of("++", List.of(JavaSymbols.PLUS_PLUS)),
-				Arguments.of("--", List.of(JavaSymbols.MINUS_MINUS)),
-				Arguments.of("+=", List.of(JavaSymbols.PLUS_EQUAL)),
-				Arguments.of("-=", List.of(JavaSymbols.MINUS_EQUAL)),
-				Arguments.of("*=", List.of(JavaSymbols.ASTERISK_EQUAL)),
-				Arguments.of("/=", List.of(JavaSymbols.FORWARD_SLASH_EQUAL)),
-				Arguments.of("%=", List.of(JavaSymbols.PERCENT_EQUAL)),
-				Arguments.of("|=", List.of(JavaSymbols.PIPE_EQUAL)),
-				Arguments.of("&=", List.of(JavaSymbols.AMPERSAND_EQUAL)),
-				Arguments.of("^=", List.of(JavaSymbols.HAT_EQUAL)),
 				// integer/long literals
 				Arguments.of("-1_2_3_4", List.of(JavaSymbols.MINUS, new IntegerLiteral(BigInteger.valueOf(1234)))),
 				Arguments.of("-12", List.of(JavaSymbols.MINUS, new IntegerLiteral(BigInteger.valueOf(12)))),
@@ -157,27 +163,18 @@ final class TestJavaLexer {
 				Arguments.of("x1y", List.of(new JavaID("x1y"))),
 				Arguments.of("ID", List.of(new JavaID("ID"))),
 				Arguments.of("_x", List.of(new JavaID("_x"))),
-				Arguments.of("Another_ID", List.of(new JavaID("Another_ID"))));
+				Arguments.of("Another_ID", List.of(new JavaID("Another_ID"))))
+				.flatMap(x -> {
+					final String code = (String) x.get()[0];
+					var tokens = x.get()[1];
+					return Stream.of(x, Arguments.of(" " + code, tokens), Arguments.of(code + " ", tokens));
+				});
 	}
 
 	@ParameterizedTest
 	@MethodSource("correctJavaSourceCode")
 	void correctParsing(final String sourceCode, final List<JavaToken> tokens) {
-		final JavaLexer it = new JavaLexer(sourceCode);
-
-		for (int i = 0; i < tokens.size(); i++) {
-			final Optional<JavaToken> t = it.next();
-			Assertions.assertTrue(t.isPresent());
-			final int finalI = i;
-			Assertions.assertEquals(
-					tokens.get(i),
-					t.orElseThrow(),
-					() -> String.format(
-							"%,d-th token expected to be %s but was %s", finalI, tokens.get(finalI), t.orElseThrow()));
-		}
-		final Optional<JavaToken> t = it.next();
-		Assertions.assertTrue(
-				t.isEmpty(), () -> String.format("Expected no more tokens but there was '%s'", t.orElseThrow()));
+		assertEquals(tokens, JavaLexer.tokenize(sourceCode));
 	}
 
 	private static Stream<Arguments> wrongJavaSourceCode() {
@@ -187,12 +184,8 @@ final class TestJavaLexer {
 	@ParameterizedTest
 	@MethodSource("wrongJavaSourceCode")
 	void invalidParsing(final String sourceCode) {
-		final JavaLexer it = new JavaLexer(sourceCode);
-
 		try {
-			while (it.next().isPresent()) {
-				// nothing to do
-			}
+			JavaLexer.tokenize(sourceCode);
 			// if we reach the end without exceptions we fail
 			Assertions.fail();
 		} catch (final UnknownTokenException | InvalidLiteralException e) {

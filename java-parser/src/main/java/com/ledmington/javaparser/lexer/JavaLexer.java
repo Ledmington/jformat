@@ -1,220 +1,183 @@
 package com.ledmington.javaparser.lexer;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 public final class JavaLexer {
 
-	private final char[] v;
-	private int i = 0;
+	private JavaLexer() {}
 
-	public JavaLexer(final String code) {
-		this.v = Objects.requireNonNull(code).toCharArray();
+	public static List<JavaToken> tokenize(final String code) {
+		final CharacterIterator it = new CharacterIterator(Objects.requireNonNull(code));
+		final List<JavaToken> tokens = new ArrayList<>();
+		while(it.hasNext()) {
+			final Optional<JavaToken> t = tokenize(it);
+			if (t.isPresent()) {
+				tokens.add(t.orElseThrow());
+				it.move();
+			} else {
+				break;
+			}
+		}
+		return tokens;
 	}
 
-	/**
-	 * Finds the next token in the input.
-	 *
-	 * @return An empty {@link Optional} if no other token could be found, a "full" optional otherwise.
-	 */
-	public Optional<JavaToken> next() {
-		if (i >= v.length) {
+	private static Optional<JavaToken> tokenize(final CharacterIterator it) {
+		if (!it.hasNext()) {
 			return Optional.empty();
 		}
 
-		skipBlanksAndComments();
+		skipBlanksAndComments(it);
 
-		if (i >= v.length) {
+		if (!it.hasNext()) {
 			return Optional.empty();
 		}
 
-		if (v[i] == '{') {
-			i++;
-			return Optional.of(JavaSymbols.LEFT_CURLY_BRACKET);
-		} else if (v[i] == '}') {
-			i++;
-			return Optional.of(JavaSymbols.RIGHT_CURLY_BRACKET);
-		} else if (v[i] == '.') {
-			i++;
-			return Optional.of(JavaSymbols.DOT);
-		} else if (v[i] == ',') {
-			i++;
-			return Optional.of(JavaSymbols.COMMA);
-		} else if (v[i] == ';') {
-			i++;
-			return Optional.of(JavaSymbols.SEMICOLON);
-		} else if (v[i] == ':') {
-			i++;
-			return Optional.of(JavaSymbols.COLON);
-		} else if (v[i] == '[') {
-			i++;
-			return Optional.of(JavaSymbols.LEFT_SQUARE_BRACKET);
-		} else if (v[i] == ']') {
-			i++;
-			return Optional.of(JavaSymbols.RIGHT_SQUARE_BRACKET);
-		} else if (v[i] == '(') {
-			i++;
-			return Optional.of(JavaSymbols.LEFT_BRACKET);
-		} else if (v[i] == ')') {
-			i++;
-			return Optional.of(JavaSymbols.RIGHT_BRACKET);
-		} else if (v[i] == '<') {
-			i++;
-			if (i < v.length && v[i] == '=') {
-				i++;
-				return Optional.of(JavaSymbols.LESS_OR_EQUAL);
+		return Optional.of(switch(it.current()){
+			case '{' -> JavaSymbols.LEFT_CURLY_BRACKET;
+			case '}' -> JavaSymbols.RIGHT_CURLY_BRACKET;
+			case '[' -> JavaSymbols.LEFT_SQUARE_BRACKET;
+			case ']' -> JavaSymbols.RIGHT_SQUARE_BRACKET;
+			case '(' -> JavaSymbols.LEFT_BRACKET;
+			case ')' -> JavaSymbols.RIGHT_BRACKET;
+			case '<' -> {
+				if(it.hasNext(3) && it.next() == '<' && it.current(2) == '=') {
+					it.move();
+					it.move();
+					yield JavaSymbols.LEFT_SHIFT_EQUAL;
+				} else if(it.hasNext(2) && it.next() == '=') {
+					it.move();
+					yield JavaSymbols.LESS_OR_EQUAL;
+				} else if(it.hasNext(2) && it.next() == '<') {
+					it.move();
+					yield JavaSymbols.LEFT_SHIFT;
+				}
+				yield JavaSymbols.LEFT_ANGLE_BRACKET;
 			}
-			return Optional.of(JavaSymbols.LEFT_ANGLE_BRACKET);
-		} else if (v[i] == '>') {
-			i++;
-			if (i < v.length && v[i] == '=') {
-				i++;
-				return Optional.of(JavaSymbols.GREATER_OR_EQUAL);
+			case '>' -> {
+				if(it.hasNext(4) && it.next() == '>' && it.current(2) == '>' && it.current(3) == '=') {
+					it.move();
+					it.move();
+					it.move();
+					yield JavaSymbols.UNSIGNED_RIGHT_SHIFT_EQUAL;
+				} else if(it.hasNext(3) && it.next() == '>' && it.current(2) == '=') {
+					it.move();
+					it.move();
+					yield JavaSymbols.RIGHT_SHIFT_EQUAL;
+				} else if(it.hasNext(3) && it.next() == '>' && it.current(2) == '>') {
+					it.move();
+					it.move();
+					yield JavaSymbols.UNSIGNED_RIGHT_SHIFT;
+				} else if(it.hasNext(2) && it.next() == '=') {
+					it.move();
+					yield JavaSymbols.GREATER_OR_EQUAL;
+				} else if(it.hasNext(2) && it.next() == '>') {
+					it.move();
+					yield JavaSymbols.RIGHT_SHIFT;
+				}
+				yield JavaSymbols.RIGHT_ANGLE_BRACKET;
 			}
-			return Optional.of(JavaSymbols.RIGHT_ANGLE_BRACKET);
-		} else if (v[i] == '+') {
-			i++;
-			if (i < v.length && v[i] == '+') {
-				i++;
-				return Optional.of(JavaSymbols.PLUS_PLUS);
+			case '.' -> JavaSymbols.DOT;
+			case ',' -> JavaSymbols.COMMA;
+			case ':' -> JavaSymbols.COLON;
+			case ';' -> JavaSymbols.SEMICOLON;
+			case '~' -> JavaSymbols.TILDE;
+			case '%' -> {
+				if(it.hasNext(2) && it.next() == '=') {
+					it.move();
+					yield JavaSymbols.PERCENT_EQUAL;
+				}
+				yield JavaSymbols.PERCENT;
 			}
-			if (i < v.length && v[i] == '=') {
-				i++;
-				return Optional.of(JavaSymbols.PLUS_EQUAL);
+			case '+' -> {
+				if(it.hasNext(2)) {
+					if (it.next() == '=') {
+						it.move();
+						yield JavaSymbols.PLUS_EQUAL;
+					} else if (it.next() == '+') {
+						it.move();
+						yield JavaSymbols.PLUS_PLUS;
+					}
+				}
+				yield JavaSymbols.PLUS;
 			}
-			return Optional.of(JavaSymbols.PLUS);
-		} else if (v[i] == '-') {
-			i++;
-			if (i < v.length && v[i] == '-') {
-				i++;
-				return Optional.of(JavaSymbols.MINUS_MINUS);
+			case '-' -> {
+				if(it.hasNext(2)) {
+					if (it.next() == '=') {
+						it.move();
+						yield JavaSymbols.MINUS_EQUAL;
+					} else if (it.next() == '-') {
+						it.move();
+						yield JavaSymbols.MINUS_MINUS;
+					} else if (it.next() == '>') {
+						it.move();
+						yield JavaSymbols.ARROW;
+					}
+				}
+				yield JavaSymbols.MINUS;
 			}
-			if (i < v.length && v[i] == '=') {
-				i++;
-				return Optional.of(JavaSymbols.MINUS_EQUAL);
+			case '*' -> {
+				if(it.hasNext(2) && it.next() == '=') {
+					it.move();
+					yield JavaSymbols.ASTERISK_EQUAL;
+				}
+				yield JavaSymbols.ASTERISK;
 			}
-			if (i < v.length && v[i] == '>') {
-				i++;
-				return Optional.of(JavaSymbols.ARROW);
+			case '/' -> {
+				if(it.hasNext(2) && it.next() == '=') {
+					it.move();
+					yield JavaSymbols.FORWARD_SLASH_EQUAL;
+				}
+				yield JavaSymbols.FORWARD_SLASH;
 			}
-			return Optional.of(JavaSymbols.MINUS);
-		} else if (v[i] == '*') {
-			i++;
-			if (i < v.length && v[i] == '=') {
-				i++;
-				return Optional.of(JavaSymbols.ASTERISK_EQUAL);
+			case '^' -> {
+				if(it.hasNext(2) && it.next() == '=') {
+					it.move();
+					yield JavaSymbols.HAT_EQUAL;
+				}
+				yield JavaSymbols.HAT;
 			}
-			return Optional.of(JavaSymbols.ASTERISK);
-		} else if (v[i] == '/') {
-			i++;
-			if (i < v.length && v[i] == '=') {
-				i++;
-				return Optional.of(JavaSymbols.FORWARD_SLASH_EQUAL);
+			case '|' -> {
+				if(it.hasNext(2) && it.next() == '=') {
+					it.move();
+					yield JavaSymbols.PIPE_EQUAL;
+				} else if(it.hasNext(2) && it.next() == '|') {
+					it.move();
+					yield JavaSymbols.DOUBLE_PIPE;
+				}
+				yield JavaSymbols.PIPE;
 			}
-			return Optional.of(JavaSymbols.FORWARD_SLASH);
-		} else if (v[i] == '%') {
-			i++;
-			if (i < v.length && v[i] == '=') {
-				i++;
-				return Optional.of(JavaSymbols.PERCENT_EQUAL);
+			case '&' -> {
+				if(it.hasNext(2) && it.next() == '=') {
+					it.move();
+					yield JavaSymbols.AMPERSAND_EQUAL;
+				} else if(it.hasNext(2) && it.next() == '&') {
+					it.move();
+					yield JavaSymbols.DOUBLE_AMPERSAND;
+				}
+				yield JavaSymbols.AMPERSAND;
 			}
-			return Optional.of(JavaSymbols.PERCENT);
-		} else if (v[i] == '^') {
-			i++;
-			if (i < v.length && v[i] == '=') {
-				i++;
-				return Optional.of(JavaSymbols.HAT_EQUAL);
+			case '=' -> {
+				if(it.hasNext(2) && it.next() == '=') {
+					it.move();
+					yield JavaSymbols.DOUBLE_EQUAL;
+				}
+				yield JavaSymbols.EQUAL;
 			}
-			return Optional.of(JavaSymbols.HAT);
-		} else if (v[i] == '|') {
-			i++;
-			if (i < v.length && v[i] == '|') {
-				i++;
-				return Optional.of(JavaSymbols.DOUBLE_PIPE);
-			}
-			if (i < v.length && v[i] == '=') {
-				i++;
-				return Optional.of(JavaSymbols.PIPE_EQUAL);
-			}
-			return Optional.of(JavaSymbols.PIPE);
-		} else if (v[i] == '&') {
-			i++;
-			if (i < v.length && v[i] == '&') {
-				i++;
-				return Optional.of(JavaSymbols.DOUBLE_AMPERSAND);
-			}
-			if (i < v.length && v[i] == '=') {
-				i++;
-				return Optional.of(JavaSymbols.AMPERSAND_EQUAL);
-			}
-			return Optional.of(JavaSymbols.AMPERSAND);
-		} else if (v[i] == '~') {
-			i++;
-			return Optional.of(JavaSymbols.TILDE);
-		} else if (v[i] == '!') {
-			i++;
-			if (i < v.length && v[i] == '=') {
-				i++;
-				return Optional.of(JavaSymbols.NOT_EQUAL);
-			}
-			return Optional.of(JavaSymbols.EXCLAMATION_MARK);
-		} else if (v[i] == '?') {
-			i++;
-			return Optional.of(JavaSymbols.QUESTION_MARK);
-		} else if (v[i] == '@') {
-			i++;
-			return Optional.of(JavaSymbols.AT_SIGN);
-		} else if (v[i] == '\'') {
-			i++;
-			final StringBuilder sb = new StringBuilder();
-			while(i < v.length && v[i] != '\'') {
-				sb.append(v[i]);
-				i++;
-			}
-			if(i >= v.length && v[v.length-1] != '\'') {
-				throw new InvalidLiteralException('\'' + sb.toString());
-			}
-			i++;
-			return Optional.of(new CharLiteral(sb.toString()));
-		} else if (v[i] == '\"') {
-			i++;
-			final StringBuilder sb = new StringBuilder();
-			while(i < v.length && v[i] != '\"') {
-				sb.append(v[i]);
-				i++;
-			}
-			if(i >= v.length && v[v.length-1] != '\"') {
-				throw new InvalidLiteralException('\"' + sb.toString());
-			}
-			i++;
-			return Optional.of(new StringLiteral(sb.toString()));
-		} else if (v[i] == '=') {
-			i++;
-			if (i < v.length && v[i] == '=') {
-				i++;
-				return Optional.of(JavaSymbols.DOUBLE_EQUAL);
-			}
-			return Optional.of(JavaSymbols.EQUAL);
-		}
-
-		if (Character.isDigit(v[i])) {
-			return parseIntegerLiteral();
-		}
-
-		if (!Character.isAlphabetic(v[i]) && v[i] != '_') {
-			throw new UnknownTokenException(v[i]);
-		}
-
-		final StringBuilder sb = new StringBuilder();
-		do {
-			sb.append(v[i]);
-			i++;
-		} while (i < v.length && (Character.isAlphabetic(v[i]) || Character.isDigit(v[i]) || v[i] == '_'));
-
-		final String s = sb.toString();
-		return Optional.of(
-				switch (s) {
+			case '!' -> JavaSymbols.EXCLAMATION_MARK;
+			case '?' -> JavaSymbols.QUESTION_MARK;
+			case '@' -> JavaSymbols.AT_SIGN;
+			default -> {
+				final StringBuilder sb = new StringBuilder();
+				while(it.hasNext() && !Character.isWhitespace(it.current())) {
+					sb.append(it.current());
+					it.move();
+				}
+				final String str = sb.toString();
+				yield switch(str) {
 					case "public" -> JavaKeywords.PUBLIC;
 					case "private" -> JavaKeywords.PRIVATE;
 					case "protected" -> JavaKeywords.PROTECTED;
@@ -236,6 +199,8 @@ public final class JavaLexer {
 					case "implements" -> JavaKeywords.IMPLEMENTS;
 					case "package" -> JavaKeywords.PACKAGE;
 					case "import" -> JavaKeywords.IMPORT;
+					case "throws" -> JavaKeywords.THROWS;
+					case "boolean" -> JavaKeywords.BOOLEAN;
 					case "byte" -> JavaKeywords.BYTE;
 					case "char" -> JavaKeywords.CHAR;
 					case "short" -> JavaKeywords.SHORT;
@@ -245,7 +210,8 @@ public final class JavaLexer {
 					case "double" -> JavaKeywords.DOUBLE;
 					case "void" -> JavaKeywords.VOID;
 					case "null" -> JavaKeywords.NULL;
-					case "throws" -> JavaKeywords.THROWS;
+					case "true" -> JavaKeywords.TRUE;
+					case "false" -> JavaKeywords.FALSE;
 					case "if" -> JavaKeywords.IF;
 					case "else" -> JavaKeywords.ELSE;
 					case "do" -> JavaKeywords.DO;
@@ -268,105 +234,107 @@ public final class JavaLexer {
 					case "this" -> JavaKeywords.THIS;
 					case "super" -> JavaKeywords.SUPER;
 					case "const" -> JavaKeywords.CONST;
-					case "boolean" -> JavaKeywords.BOOLEAN;
-					case "true" -> JavaKeywords.TRUE;
-					case "false" -> JavaKeywords.FALSE;
-					default -> new JavaID(s);
-				});
+					default -> new JavaID(str);
+				};
+			}
+		});
 	}
 
-	private Optional<JavaToken> parseIntegerLiteral() {
+	private static JavaToken parseIntegerLiteral(final CharacterIterator it) {
 		BigInteger x = BigInteger.ZERO;
 
-		if (i < v.length - 1 && v[i] == '0' && v[i + 1] == 'x') {
+		if (it.hasNext(2) && it.current() == '0' && it.current(1) == 'x') {
 			// hexadecimal literal
-			i += 2;
-			while (i < v.length
-					&& (Character.isDigit(v[i])
-							|| v[i] == 'a'
-							|| v[i] == 'b'
-							|| v[i] == 'c'
-							|| v[i] == 'd'
-							|| v[i] == 'e'
-							|| v[i] == 'f')) {
-				x = x.shiftLeft(4).add(new BigInteger("" + v[i], 16));
-				i++;
+			it.move();
+			it.move();
+			while (it.hasNext()
+					&& (Character.isDigit(it.current())
+							|| it.current() == 'a'
+							|| it.current() == 'b'
+							|| it.current() == 'c'
+							|| it.current() == 'd'
+							|| it.current() == 'e'
+							|| it.current() == 'f')) {
+				x = x.shiftLeft(4).add(new BigInteger(String.valueOf(it.current()), 16));
+				it.move();
 			}
-		} else if (i < v.length - 1 && v[i] == '0' && v[i + 1] == 'b') {
+		} else if (it.hasNext(2) && it.current() == '0' && it.next() == 'b') {
 			// binary literal
-			i += 2;
-			while (i < v.length && (v[i] == '0' || v[i] == '1')) {
-				x = x.shiftLeft(1).add((v[i] == '1') ? BigInteger.ONE : BigInteger.ZERO);
-				i++;
+			it.move();
+			it.move();
+			while (it.hasNext() && (it.current() == '0' || it.current() == '1')) {
+				x = x.shiftLeft(1).add((it.current() == '1') ? BigInteger.ONE : BigInteger.ZERO);
+				it.move();
 			}
 		} else {
 			// base-10 literal
-			while (i < v.length && (Character.isDigit(v[i]) || v[i] == '_')) {
-				if (Character.isDigit(v[i])) {
-					x = x.multiply(BigInteger.TEN).add(new BigInteger("" + v[i]));
+			while (it.hasNext() && (Character.isDigit(it.current()) || it.current() == '_')) {
+				if (Character.isDigit(it.current())) {
+					x = x.multiply(BigInteger.TEN).add(new BigInteger(String.valueOf(it.current())));
 				}
-				i++;
+				it.move();
 			}
 		}
 
-		if (i < v.length && v[i] == 'L') {
-			i++;
-			return Optional.of(new IntegerLiteral(x, true));
+		if (it.hasNext() && it.current() == 'L') {
+			it.move();
+			return new IntegerLiteral(x, true);
 		}
 
-		return Optional.of(new IntegerLiteral(x));
+		return new IntegerLiteral(x);
 	}
 
-	private void skipBlanksAndComments() {
+	private static void skipBlanksAndComments(final CharacterIterator it) {
 		boolean again;
 		do {
 			again = false;
-			if (isBlank()) {
-				skipBlanks();
+			if (isBlank(it)) {
+				skipBlanks(it);
 				again = true;
 			}
-			if (isLineComment()) {
-				skipLineComment();
+			if (isLineComment(it)) {
+				skipLineComment(it);
 				again = true;
 			}
-			if (isBlockComment()) {
-				skipBlockComment();
+			if (isBlockComment(it)) {
+				skipBlockComment(it);
 				again = true;
 			}
 		} while (again);
 	}
 
-	private boolean isBlank() {
-		return i < v.length && Character.isWhitespace(v[i]);
+	private static boolean isBlank(final CharacterIterator it) {
+		return it.hasNext() && Character.isWhitespace(it.current());
 	}
 
-	private void skipBlanks() {
-		while (i < v.length && Character.isWhitespace(v[i])) {
-			i++;
+	private static void skipBlanks(final CharacterIterator it) {
+		while (it.hasNext() && Character.isWhitespace(it.current())) {
+			it.move();
 		}
 	}
 
-	private boolean isLineComment() {
-		return i < v.length - 1 && v[i] == '/' && v[i + 1] == '/';
+	private static boolean isLineComment(final CharacterIterator it) {
+		return it.hasNext(2) && it.current() == '/' && it.next() == '/';
 	}
 
-	private void skipLineComment() {
-		i += 2;
-		while (v[i] != '\n') {
-			i++;
-		}
-		i++;
+	private static void skipLineComment(final CharacterIterator it) {
+		it.move();
+		do {
+			it.move();
+		} while (it.current() != '\n');
+		it.move();
 	}
 
-	private boolean isBlockComment() {
-		return i < v.length - 1 && v[i] == '/' && v[i + 1] == '*';
+	private static boolean isBlockComment(final CharacterIterator it) {
+		return it.hasNext(2) && it.current() == '/' && it.next() == '*';
 	}
 
-	private void skipBlockComment() {
-		i += 2;
-		while (v[i] != '*' || v[i + 1] != '/') {
-			i++;
-		}
-		i += 2;
+	private static void skipBlockComment(final CharacterIterator it) {
+		it.move();
+		do {
+			it.move();
+		} while (it.current() != '*' || it.next() != '/');
+		it.move();
+		it.move();
 	}
 }

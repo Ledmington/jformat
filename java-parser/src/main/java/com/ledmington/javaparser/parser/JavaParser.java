@@ -26,19 +26,7 @@ public final class JavaParser {
 	private int i = 0;
 
 	public JavaParser(final String code) {
-		final JavaLexer lexer = new JavaLexer(Objects.requireNonNull(code));
-		final List<JavaToken> parsed = new ArrayList<>();
-		while (true) {
-			final Optional<JavaToken> t = lexer.next();
-			if (t.isEmpty()) {
-				break;
-			}
-			parsed.add(t.orElseThrow());
-		}
-		this.tokens = new JavaToken[parsed.size()];
-		for (int i = 0; i < parsed.size(); i++) {
-			this.tokens[i] = parsed.get(i);
-		}
+		this.tokens = JavaLexer.tokenize(Objects.requireNonNull(code)).toArray(new JavaToken[0]);
 	}
 
 	public Optional<JavaNode> next() {
