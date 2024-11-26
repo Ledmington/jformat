@@ -15,7 +15,7 @@ import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
 @State(Scope.Benchmark)
-@BenchmarkMode({Mode.SampleTime})
+@BenchmarkMode({ Mode.SampleTime })
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Warmup(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
@@ -37,6 +37,6 @@ public class Parsing {
 
 	@Benchmark
 	public void parse(final Blackhole bh) {
-		bh.consume(new JavaParser(code).next());
+		bh.consume(JavaParser.parse(code));
 	}
 }

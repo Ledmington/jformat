@@ -8,6 +8,6 @@ public final class InvalidLiteralException extends RuntimeException {
 	private static final long serialVersionUID = 4007465801267470648L;
 
 	public InvalidLiteralException(final String invalidLiteral) {
-		super(String.format("'%s' is an invalid literal.",invalidLiteral));
+		super(String.format("'%s' is an invalid literal.", invalidLiteral));
 	}
 }

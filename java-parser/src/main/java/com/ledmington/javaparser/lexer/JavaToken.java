@@ -1,3 +1,4 @@
 package com.ledmington.javaparser.lexer;
 
-public interface JavaToken {}
+public interface JavaToken {
+}

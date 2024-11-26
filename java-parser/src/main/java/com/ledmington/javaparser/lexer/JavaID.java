@@ -10,7 +10,7 @@ public record JavaID(String id) implements JavaToken {
 
 	@Override
 	public String toString() {
-		return id;
+		return "ID(" + id + ")";
 	}
 
 	@Override

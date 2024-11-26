@@ -159,10 +159,15 @@ final class TestJavaLexer {
 				Arguments.of("\"\n\"", List.of(new StringLiteral("\n"))),
 				// IDs
 				Arguments.of("x", List.of(new JavaID("x"))),
+				Arguments.of("$x", List.of(new JavaID("$x"))),
+				Arguments.of("£x", List.of(new JavaID("£x"))),
+				Arguments.of("€x", List.of(new JavaID("€x"))),
 				Arguments.of("x1", List.of(new JavaID("x1"))),
 				Arguments.of("x1y", List.of(new JavaID("x1y"))),
 				Arguments.of("ID", List.of(new JavaID("ID"))),
 				Arguments.of("_x", List.of(new JavaID("_x"))),
+				Arguments.of("A{}",
+						List.of(new JavaID("A"), JavaSymbols.LEFT_CURLY_BRACKET, JavaSymbols.RIGHT_CURLY_BRACKET)),
 				Arguments.of("Another_ID", List.of(new JavaID("Another_ID"))))
 				.flatMap(x -> {
 					final String code = (String) x.get()[0];
@@ -178,7 +183,7 @@ final class TestJavaLexer {
 	}
 
 	private static Stream<Arguments> wrongJavaSourceCode() {
-		return Stream.of("$", "£", "#", "€","\"a","\"","'a","'").map(Arguments::of);
+		return Stream.of("#", "\"a", "\"", "'a", "'").map(Arguments::of);
 	}
 
 	@ParameterizedTest

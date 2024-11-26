@@ -8,16 +8,17 @@ import java.util.Optional;
 
 public final class JavaLexer {
 
-	private JavaLexer() {}
+	private JavaLexer() {
+	}
 
 	public static List<JavaToken> tokenize(final String code) {
 		final CharacterIterator it = new CharacterIterator(Objects.requireNonNull(code));
 		final List<JavaToken> tokens = new ArrayList<>();
-		while(it.hasNext()) {
+		while (it.hasNext()) {
 			final Optional<JavaToken> t = tokenize(it);
 			if (t.isPresent()) {
 				tokens.add(t.orElseThrow());
-				it.move();
+				// it.move();
 			} else {
 				break;
 			}
@@ -36,170 +37,236 @@ public final class JavaLexer {
 			return Optional.empty();
 		}
 
-		return Optional.of(switch(it.current()){
-			case '{' -> JavaSymbols.LEFT_CURLY_BRACKET;
-			case '}' -> JavaSymbols.RIGHT_CURLY_BRACKET;
-			case '[' -> JavaSymbols.LEFT_SQUARE_BRACKET;
-			case ']' -> JavaSymbols.RIGHT_SQUARE_BRACKET;
-			case '(' -> JavaSymbols.LEFT_BRACKET;
-			case ')' -> JavaSymbols.RIGHT_BRACKET;
+		return Optional.of(switch (it.current()) {
+			case '{' -> {
+				it.move();
+				yield JavaSymbols.LEFT_CURLY_BRACKET;
+			}
+			case '}' -> {
+				it.move();
+				yield JavaSymbols.RIGHT_CURLY_BRACKET;
+			}
+			case '[' -> {
+				it.move();
+				yield JavaSymbols.LEFT_SQUARE_BRACKET;
+			}
+			case ']' -> {
+				it.move();
+				yield JavaSymbols.RIGHT_SQUARE_BRACKET;
+			}
+			case '(' -> {
+				it.move();
+				yield JavaSymbols.LEFT_BRACKET;
+			}
+			case ')' -> {
+				it.move();
+				yield JavaSymbols.RIGHT_BRACKET;
+			}
+			case '.' -> {
+				it.move();
+				yield JavaSymbols.DOT;
+			}
+			case ',' -> {
+				it.move();
+				yield JavaSymbols.COMMA;
+			}
+			case ':' -> {
+				it.move();
+				yield JavaSymbols.COLON;
+			}
+			case ';' -> {
+				it.move();
+				yield JavaSymbols.SEMICOLON;
+			}
+			case '~' -> {
+				it.move();
+				yield JavaSymbols.TILDE;
+			}
+			case '!' -> {
+				it.move();
+				yield JavaSymbols.EXCLAMATION_MARK;
+			}
+			case '?' -> {
+				it.move();
+				yield JavaSymbols.QUESTION_MARK;
+			}
+			case '@' -> {
+				it.move();
+				yield JavaSymbols.AT_SIGN;
+			}
+			case '#' -> throw new UnknownTokenException('#');
 			case '<' -> {
-				if(it.hasNext(3) && it.next() == '<' && it.current(2) == '=') {
-					it.move();
-					it.move();
+				if (it.hasNext(3) && it.next() == '<' && it.current(2) == '=') {
+					it.move(3);
 					yield JavaSymbols.LEFT_SHIFT_EQUAL;
-				} else if(it.hasNext(2) && it.next() == '=') {
-					it.move();
-					yield JavaSymbols.LESS_OR_EQUAL;
-				} else if(it.hasNext(2) && it.next() == '<') {
-					it.move();
-					yield JavaSymbols.LEFT_SHIFT;
+				} else if (it.hasNext(2)) {
+					if (it.next() == '=') {
+						it.move(2);
+						yield JavaSymbols.LESS_OR_EQUAL;
+					} else if (it.next() == '<') {
+						it.move(2);
+						yield JavaSymbols.LEFT_SHIFT;
+					}
 				}
+				it.move();
 				yield JavaSymbols.LEFT_ANGLE_BRACKET;
 			}
 			case '>' -> {
-				if(it.hasNext(4) && it.next() == '>' && it.current(2) == '>' && it.current(3) == '=') {
-					it.move();
-					it.move();
-					it.move();
+				if (it.hasNext(4) && it.next() == '>' && it.current(2) == '>' && it.current(3) == '=') {
+					it.move(4);
 					yield JavaSymbols.UNSIGNED_RIGHT_SHIFT_EQUAL;
-				} else if(it.hasNext(3) && it.next() == '>' && it.current(2) == '=') {
-					it.move();
-					it.move();
+				} else if (it.hasNext(3) && it.next() == '>' && it.current(2) == '=') {
+					it.move(3);
 					yield JavaSymbols.RIGHT_SHIFT_EQUAL;
-				} else if(it.hasNext(3) && it.next() == '>' && it.current(2) == '>') {
-					it.move();
-					it.move();
+				} else if (it.hasNext(3) && it.next() == '>' && it.current(2) == '>') {
+					it.move(3);
 					yield JavaSymbols.UNSIGNED_RIGHT_SHIFT;
-				} else if(it.hasNext(2) && it.next() == '=') {
-					it.move();
+				} else if (it.hasNext(2) && it.next() == '=') {
+					it.move(2);
 					yield JavaSymbols.GREATER_OR_EQUAL;
-				} else if(it.hasNext(2) && it.next() == '>') {
-					it.move();
+				} else if (it.hasNext(2) && it.next() == '>') {
+					it.move(2);
 					yield JavaSymbols.RIGHT_SHIFT;
 				}
+				it.move();
 				yield JavaSymbols.RIGHT_ANGLE_BRACKET;
 			}
-			case '.' -> JavaSymbols.DOT;
-			case ',' -> JavaSymbols.COMMA;
-			case ':' -> JavaSymbols.COLON;
-			case ';' -> JavaSymbols.SEMICOLON;
-			case '~' -> JavaSymbols.TILDE;
 			case '%' -> {
-				if(it.hasNext(2) && it.next() == '=') {
-					it.move();
+				if (it.hasNext(2) && it.next() == '=') {
+					it.move(2);
 					yield JavaSymbols.PERCENT_EQUAL;
 				}
+				it.move();
 				yield JavaSymbols.PERCENT;
 			}
 			case '+' -> {
-				if(it.hasNext(2)) {
+				if (it.hasNext(2)) {
 					if (it.next() == '=') {
-						it.move();
+						it.move(2);
 						yield JavaSymbols.PLUS_EQUAL;
 					} else if (it.next() == '+') {
-						it.move();
+						it.move(2);
 						yield JavaSymbols.PLUS_PLUS;
 					}
 				}
+				it.move();
 				yield JavaSymbols.PLUS;
 			}
 			case '-' -> {
-				if(it.hasNext(2)) {
+				if (it.hasNext(2)) {
 					if (it.next() == '=') {
-						it.move();
+						it.move(2);
 						yield JavaSymbols.MINUS_EQUAL;
 					} else if (it.next() == '-') {
-						it.move();
+						it.move(2);
 						yield JavaSymbols.MINUS_MINUS;
 					} else if (it.next() == '>') {
-						it.move();
+						it.move(2);
 						yield JavaSymbols.ARROW;
 					}
 				}
+				it.move();
 				yield JavaSymbols.MINUS;
 			}
 			case '*' -> {
-				if(it.hasNext(2) && it.next() == '=') {
-					it.move();
+				if (it.hasNext(2) && it.next() == '=') {
+					it.move(2);
 					yield JavaSymbols.ASTERISK_EQUAL;
 				}
+				it.move();
 				yield JavaSymbols.ASTERISK;
 			}
 			case '/' -> {
-				if(it.hasNext(2) && it.next() == '=') {
-					it.move();
+				if (it.hasNext(2) && it.next() == '=') {
+					it.move(2);
 					yield JavaSymbols.FORWARD_SLASH_EQUAL;
 				}
+				it.move();
 				yield JavaSymbols.FORWARD_SLASH;
 			}
 			case '^' -> {
-				if(it.hasNext(2) && it.next() == '=') {
-					it.move();
+				if (it.hasNext(2) && it.next() == '=') {
+					it.move(2);
 					yield JavaSymbols.HAT_EQUAL;
 				}
+				it.move();
 				yield JavaSymbols.HAT;
 			}
 			case '|' -> {
-				if(it.hasNext(2) && it.next() == '=') {
-					it.move();
+				if (it.hasNext(2) && it.next() == '=') {
+					it.move(2);
 					yield JavaSymbols.PIPE_EQUAL;
-				} else if(it.hasNext(2) && it.next() == '|') {
-					it.move();
+				} else if (it.hasNext(2) && it.next() == '|') {
+					it.move(2);
 					yield JavaSymbols.DOUBLE_PIPE;
 				}
+				it.move();
 				yield JavaSymbols.PIPE;
 			}
 			case '&' -> {
-				if(it.hasNext(2) && it.next() == '=') {
-					it.move();
+				if (it.hasNext(2) && it.next() == '=') {
+					it.move(2);
 					yield JavaSymbols.AMPERSAND_EQUAL;
-				} else if(it.hasNext(2) && it.next() == '&') {
-					it.move();
+				} else if (it.hasNext(2) && it.next() == '&') {
+					it.move(2);
 					yield JavaSymbols.DOUBLE_AMPERSAND;
 				}
+				it.move();
 				yield JavaSymbols.AMPERSAND;
 			}
 			case '=' -> {
-				if(it.hasNext(2) && it.next() == '=') {
-					it.move();
+				if (it.hasNext(2) && it.next() == '=') {
+					it.move(2);
 					yield JavaSymbols.DOUBLE_EQUAL;
 				}
+				it.move();
 				yield JavaSymbols.EQUAL;
 			}
-			case '!' -> JavaSymbols.EXCLAMATION_MARK;
-			case '?' -> JavaSymbols.QUESTION_MARK;
-			case '@' -> JavaSymbols.AT_SIGN;
 			case '\'' -> {
 				it.move();
 				final StringBuilder sb = new StringBuilder();
-				while(it.hasNext() && it.current() != '\'') {
+				while (true) {
+					if (!it.hasNext()) {
+						throw new InvalidLiteralException('\'' + sb.toString());
+					}
+					if (it.current() == '\'') {
+						break;
+					}
 					sb.append(it.current());
 					it.move();
 				}
+				it.move();
 				yield new CharLiteral(sb.toString());
 			}
 			case '"' -> {
 				it.move();
 				final StringBuilder sb = new StringBuilder();
-				while(it.hasNext() && it.current() != '"') {
+				while (true) {
+					if (!it.hasNext()) {
+						throw new InvalidLiteralException('"' + sb.toString());
+					}
+					if (it.current() == '"') {
+						break;
+					}
 					sb.append(it.current());
 					it.move();
 				}
+				it.move();
 				yield new StringLiteral(sb.toString());
 			}
 			default -> {
-				if(Character.isDigit(it.current())) {
+				if (Character.isDigit(it.current())) {
 					yield parseIntegerLiteral(it);
 				}
 
 				final StringBuilder sb = new StringBuilder();
-				while(it.hasNext() && !Character.isWhitespace(it.current())) {
+				while (it.hasNext() && (Character.isAlphabetic(it.current()) || Character.isDigit(it.current())
+						|| it.current() == '_' || it.current() == '$' || it.current() == '£' || it.current() == '€')) {
 					sb.append(it.current());
 					it.move();
 				}
 				final String str = sb.toString();
-				yield switch(str) {
+				yield switch (str) {
 					case "public" -> JavaKeywords.PUBLIC;
 					case "private" -> JavaKeywords.PRIVATE;
 					case "protected" -> JavaKeywords.PROTECTED;
@@ -267,8 +334,7 @@ public final class JavaLexer {
 
 		if (it.hasNext(2) && it.current() == '0' && it.current(1) == 'x') {
 			// hexadecimal literal
-			it.move();
-			it.move();
+			it.move(2);
 			while (it.hasNext()
 					&& (Character.isDigit(it.current())
 							|| it.current() == 'a'
@@ -282,8 +348,7 @@ public final class JavaLexer {
 			}
 		} else if (it.hasNext(2) && it.current() == '0' && it.next() == 'b') {
 			// binary literal
-			it.move();
-			it.move();
+			it.move(2);
 			while (it.hasNext() && (it.current() == '0' || it.current() == '1')) {
 				x = x.shiftLeft(1).add((it.current() == '1') ? BigInteger.ONE : BigInteger.ZERO);
 				it.move();
