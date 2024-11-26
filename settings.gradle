@@ -3,5 +3,6 @@ plugins {
 }
 
 rootProject.name = 'jformat'
-include('java-parser')
-include('cli')
+include 'java-parser'
+include 'cli'
+include 'parser'
