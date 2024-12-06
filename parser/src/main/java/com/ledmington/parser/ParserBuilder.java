@@ -235,6 +235,7 @@ public final class ParserBuilder {
 			public Optional<String> get() {
 				if (current == null) {
 					final Optional<String> opt = previous.get();
+					System.out.printf("[%c] Previous sent '%s'\n", ch, opt);
 					if (opt.isEmpty()) {
 						return Optional.empty();
 					}
@@ -249,11 +250,13 @@ public final class ParserBuilder {
 					result = Optional.of(current);
 					current = null;
 				}
+				System.out.printf("[%c] Returning '%s'\n", ch, result);
 				return result;
 			}
 
 			@Override
 			public void setInput(final String input) {
+				current = null;
 				previous.setInput(input);
 			}
 
@@ -294,6 +297,7 @@ public final class ParserBuilder {
 
 			@Override
 			public void setInput(final String input) {
+				current = null;
 				previous.setInput(input);
 			}
 
@@ -335,6 +339,7 @@ public final class ParserBuilder {
 
 			@Override
 			public void setInput(final String input) {
+				current = null;
 				previous.setInput(input);
 			}
 
