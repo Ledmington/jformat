@@ -17,11 +17,18 @@
  */
 package com.ledmington.jformat;
 
+/** Entrypoint class for formatting java source code. */
 public final class Formatter {
 
 	private Formatter() {}
 
-	public String format(final String input) {
+	/**
+	 * Formats a given Java source input.
+	 *
+	 * @param input Java source code to be formatted.
+	 * @return The formatted source code.
+	 */
+	public static String format(final String input) {
 		return input;
 	}
 }
