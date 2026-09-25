@@ -17,6 +17,8 @@
  */
 package com.ledmington.jformat;
 
+import com.ledmington.jformat.gen.JavaParser;
+
 /** Entrypoint class for formatting java source code. */
 public final class Formatter {
 
@@ -29,6 +31,10 @@ public final class Formatter {
 	 * @return The formatted source code.
 	 */
 	public static String format(final String input) {
+		final JavaParser parser = new JavaParser();
+		// System.out.println(input);
+		final com.ledmington.jformat.gen.JavaParser.Node raw = parser.parse(input);
+		// System.out.println(raw);
 		return input;
 	}
 }

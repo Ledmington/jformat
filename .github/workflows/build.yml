@@ -30,5 +30,8 @@ jobs:
       - name: Format check
         run: ./gradlew --console=plain --no-daemon spotlessCheck
 
+      - name: Generate parser
+        run: ./gradlew --console=plain --no-daemon generateJavaParser
+
       - name: Build
         run: ./gradlew --console=plain --no-daemon build

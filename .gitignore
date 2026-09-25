@@ -3,3 +3,6 @@ build
 .idea
 .vscode
 bin
+
+core/src/main/java/com/ledmington/jformat/gen/*
+!core/src/main/java/com/ledmington/jformat/gen/.gitkeep

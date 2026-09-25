@@ -3,3 +3,26 @@ plugins {
 }
 
 dependencies {}
+
+tasks.register('downloadJapg', Download) {
+	group = 'utilities'
+	description = 'Downloads japg from GitHub'
+	src "https://github.com/Ledmington/japg/releases/download/snapshot-2026-09-24-4891e47/japg-cli-0.1.0.jar"
+	dest new File(project.layout.buildDirectory.get().toString(), "japg.jar")
+	overwrite false
+	acceptAnyCertificate false
+}
+
+tasks.register('generateJavaParser', JavaExec) {
+	dependsOn downloadJapg
+	group = 'utilities'
+	description = 'Generates the Java parser'
+	classpath downloadJapg.dest
+	args = [
+			"-g", path(project.layout.projectDirectory.toString(), "src", "main", "resources", "java.g"),
+			"-o", path(project.layout.projectDirectory.toString(), "src", "main", "java", "com", "ledmington", "jformat", "gen", "JavaParser.java"),
+			"-p", "com.ledmington.jformat.gen",
+			"--overwrite",
+			// "--verbose"
+	]
+}
