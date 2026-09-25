@@ -3,4 +3,5 @@ plugins {
 }
 
 rootProject.name = 'jformat'
-include('app')
+include('core')
+include('cli')
