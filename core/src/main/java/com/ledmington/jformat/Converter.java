@@ -22,10 +22,17 @@ import com.ledmington.jformat.ast.Node;
 import com.ledmington.jformat.ast.SourceFile;
 import com.ledmington.jformat.gen.JavaParser.source_file;
 
+/** Class responsible of converting the raw parse tree into a more convenient AST representation. */
 public final class Converter {
 
 	private Converter() {}
 
+	/**
+	 * Converts the raw parse tree into a more convenient AST representation.
+	 *
+	 * @param raw The raw parse tree.
+	 * @return The AST representation of the raw parse tree.
+	 */
 	public static Node convert(final com.ledmington.jformat.gen.JavaParser.Node raw) {
 		if (raw instanceof final source_file sf) {
 			return convertSourceFile(sf);

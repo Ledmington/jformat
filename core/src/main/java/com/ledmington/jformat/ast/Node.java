@@ -17,4 +17,5 @@
  */
 package com.ledmington.jformat.ast;
 
+/** Common type for AST nodes. */
 public interface Node {}

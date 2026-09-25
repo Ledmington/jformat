@@ -17,4 +17,9 @@
  */
 package com.ledmington.jformat.ast;
 
+/**
+ * Represents a class declaration in the Java source code.
+ *
+ * @param name The name of the class.
+ */
 public record ClassDeclaration(String name) implements Node {}

@@ -17,4 +17,9 @@
  */
 package com.ledmington.jformat.ast;
 
+/**
+ * Represents the contents of a single Java source file.
+ *
+ * @param decl The class declaration contained in the source file.
+ */
 public record SourceFile(ClassDeclaration decl) implements Node {}
