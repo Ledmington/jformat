@@ -4,6 +4,10 @@ plugins {
 
 dependencies {}
 
+javadoc {
+	exclude 'com/ledmington/jformat/gen/**'
+}
+
 tasks.register('downloadJapg', Download) {
 	group = 'utilities'
 	description = 'Downloads japg from GitHub'
