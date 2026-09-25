@@ -1,10 +1,12 @@
-prog = class_declaration ;
+source_file = class_declaration ;
 
 class_declaration = CLASS ID LEFT_CURLY_BRACKET RIGHT_CURLY_BRACKET ;
 
 CLASS = "class" ;
 LEFT_CURLY_BRACKET = "{" ;
 RIGHT_CURLY_BRACKET = "}" ;
+
+ID = LETTER+ ;
 
 LETTER = "A" | "B" | "C" | "D" | "E" | "F" | "G"
        | "H" | "I" | "J" | "K" | "L" | "M" | "N"
@@ -14,7 +16,5 @@ LETTER = "A" | "B" | "C" | "D" | "E" | "F" | "G"
        | "j" | "k" | "l" | "m" | "n" | "o" | "p"
        | "q" | "r" | "s" | "t" | "u" | "v" | "w"
        | "x" | "y" | "z" ;
-
-ID = LETTER+ ;
 
 _WHITESPACE = ( " " | "\t" | "\n" )+ ;

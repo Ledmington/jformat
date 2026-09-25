@@ -20,32 +20,20 @@ package com.ledmington.jformat;
 import com.ledmington.jformat.ast.ClassDeclaration;
 import com.ledmington.jformat.ast.Node;
 import com.ledmington.jformat.ast.SourceFile;
-import com.ledmington.jformat.gen.JavaParser;
+import com.ledmington.jformat.gen.JavaParser.source_file;
 
-/** Entrypoint class for formatting java source code. */
-public final class Formatter {
+public final class Converter {
 
-	private Formatter() {}
+	private Converter() {}
 
-	/**
-	 * Formats a given Java source input.
-	 *
-	 * @param input Java source code to be formatted.
-	 * @return The formatted source code.
-	 */
-	public static String format(final String input) {
-		final JavaParser parser = new JavaParser();
-		final com.ledmington.jformat.gen.JavaParser.Node raw = parser.parse(input);
-		final Node ast = Converter.convert(raw);
-		final String formatted = serialize((SourceFile) ast);
-		return formatted;
+	public static Node convert(final com.ledmington.jformat.gen.JavaParser.Node raw) {
+		if (raw instanceof final source_file sf) {
+			return convertSourceFile(sf);
+		}
+		throw new IllegalArgumentException(String.format("Expected a prog node but was '%s'.", raw));
 	}
 
-	private static String serialize(final SourceFile sf) {
-		return serialize(sf.decl());
-	}
-
-	private static String serialize(final ClassDeclaration cd) {
-		return "class " + cd.name() + " {}";
+	private static SourceFile convertSourceFile(final com.ledmington.jformat.gen.JavaParser.source_file sf) {
+		return new SourceFile(new ClassDeclaration(sf.inner().n1().literal()));
 	}
 }
